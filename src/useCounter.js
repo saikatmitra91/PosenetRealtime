@@ -1,23 +1,19 @@
 import { useEffect, useState } from "react";
 
 export const useCounter = () => {
-  const [count, setCount] = useState(-1);
+  const [counter, setCounter] = useState(-1);
 
-  const start = (val) => {
-    setCount(val);
-  }
-
-  const reset = () => {
-    setCount(-1);
+  const startCounter = (val) => {
+    setCounter(val);
   }
 
   useEffect(() => {
-    if (count > 0) {
+    if (counter >= 0) {
       setTimeout(() => {
-        setCount((count) => count - 1);
+        setCounter((count) => count - 1);
       }, 1000);
     }
-  }, [count]);
+  }, [counter]);
 
-  return { count, start, reset };
+  return {  counter, startCounter };
 };

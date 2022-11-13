@@ -10,6 +10,7 @@ import { images } from "./constants";
 
 const jsConfetti = new JSConfetti();
 let requestId;
+
 function App() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
@@ -17,10 +18,9 @@ function App() {
   const posenetRef = useRef(null);
   const [distance, setDistance] = useState(0);
   const [maxDistance, setMaxDistance] = useState(distance);
-  const { count: startCounter, start } = useCounter();
-  const { count: breakCounter, start: startBreakCounter } = useCounter();
-  const [currentImage, setCurrentImage] = useState(0);
-  const [success, setSuccess] = useState(new Array(images.length).fill(false));
+  const { counter, startCounter } = useCounter();
+  const [currentImage, setCurrentImage] = useState(-1);
+  const [success, setSuccess] = useState(Array(images.length).fill(null));
 
   /**
    * @param {posenet.PoseNet} net
@@ -36,7 +36,6 @@ function App() {
       const video = webcamRef.current.video;
       const videoWidth = webcamRef.current.video.videoWidth;
       const videoHeight = webcamRef.current.video.videoHeight;
-
       // Set video width
       webcamRef.current.video.width = videoWidth;
       webcamRef.current.video.height = videoHeight;
@@ -62,6 +61,16 @@ function App() {
     window.requestAnimationFrame(detect);
   }, [detect]);
 
+  const start = useCallback(() => {
+    if (currentImage === images.length - 1) {
+      setCurrentImage(0);
+    } else {
+      setCurrentImage(currentImage + 1);
+    }
+    startCounter(10);
+    detect();
+  }, [currentImage, detect]); //eslint-disable-line
+
   const drawCanvas = (pose, video, videoWidth, videoHeight, canvas) => {
     const ctx = canvas.current.getContext("2d");
     canvas.current.width = videoWidth;
@@ -84,26 +93,19 @@ function App() {
 
   // once the start counter ends or scores exceeds reset and start break of 5secs
   useEffect(() => {
-    if (startCounter === 0 || maxDistance > 0.99) {
+    if (
+      success[currentImage] === null &&
+      (counter === 0 || maxDistance >= 0.99)
+    ) {
       setSuccess((value) => {
-        value[currentImage] = maxDistance > 0.99;
+        value[currentImage] = maxDistance >= 0.99;
         return value;
       });
       setDistance(0);
       setMaxDistance(0);
       cancelAnimationFrame(requestId);
-      startBreakCounter(5);
     }
-  }, [maxDistance, startCounter, currentImage]); //eslint-disable-line
-
-  // when break counter resets, move to next image and start again
-  useEffect(() => {
-    if (breakCounter === 0 && currentImage < images.length - 1) {
-      setCurrentImage(currentImage + 1);
-      detect();
-      start(10);
-    }
-  }, [detect, breakCounter, currentImage]); //eslint-disable-line
+  }, [maxDistance, startCounter, success, currentImage]); //eslint-disable-line
 
   // show the success confetti
   useEffect(() => {
@@ -112,25 +114,19 @@ function App() {
     }
   }, [success]);
 
-
   return (
     <div className="container">
       <div className="centered">
         <Webcam ref={webcamRef} />
         <canvas className="canvas" ref={canvasRef} />
       </div>
-      <button
-        onClick={() => {
-          start(10);
-        }}
-        disabled={startCounter > -1}
-      >
-        {startCounter > 0 ? startCounter : "Start"}
+      <button onClick={start} disabled={counter > -1}>
+        {counter > 0 ? counter : "Start"}
       </button>
       <div
         className="image-score"
         style={{
-          visibility: startCounter > -1 ? "visible" : "hidden",
+          visibility: counter > -1 ? "visible" : "hidden",
         }}
       >
         <img
