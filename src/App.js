@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
-import * as tf from "@tensorflow/tfjs";
 import * as posenet from "@tensorflow-models/posenet";
 import Webcam from "react-webcam";
 import { drawKeypoints, drawSkeleton } from "./utilities";
@@ -14,24 +13,10 @@ function App() {
   const [distance, setDistance] = useState(0);
   const [maxDistance, setMaxDistance] = useState(distance)
 
-  //  Load posenet
-  const runPosenet = async () => {
-    posenetRef.current = true
-    const net = await posenet.load({
-      inputResolution: { width: 640, height: 480 },
-      scale: 0.8,
-    });
-    
-    //
-    setInterval(() => {
-      detect(net);
-    }, 100);
-  };
-
   /**
    * @param {posenet.PoseNet} net 
    */
-  const detect = async (net) => {
+   const detect = useCallback(async (net) => {
     if (
       typeof webcamRef.current !== "undefined" &&
       webcamRef.current !== null &&
@@ -54,8 +39,22 @@ function App() {
       })
       setDistance(data)
       drawCanvas(pose, video, videoWidth, videoHeight, canvasRef);
+      window.requestAnimationFrame(() => detect(net));
     }
-  };
+  }, []);
+  //  Load posenet
+  const runPosenet = useCallback(async () => {
+    posenetRef.current = true
+    const net = await posenet.load({
+      inputResolution: { width: 640, height: 480 },
+      scale: 0.8,
+    });
+    
+    //
+    // setInterval(() => {
+      window.requestAnimationFrame(() => detect(net));
+    // }, 1000);
+  }, [detect]);
 
   const drawCanvas = (pose, video, videoWidth, videoHeight, canvas) => {
     const ctx = canvas.current.getContext("2d");
@@ -69,7 +68,7 @@ function App() {
     if (!posenetRef.current){
       runPosenet();
     }
-  })
+  }, [runPosenet]);
 
   useEffect( () => {
     if(distance > maxDistance) {
@@ -109,7 +108,7 @@ function App() {
             }}
           />
         <div className="image-score">
-          <img ref={imgRef} crossOrigin="anonymous" src="https://ucarecdn.com/cae252d0-7c80-4523-834c-a0d3e053796f/-/preview/-/quality/smart/-/format/auto/" id="pose-match" style={{ width: "100%"}}/>
+          <img ref={imgRef} alt="pose" crossOrigin="anonymous" src="https://ucarecdn.com/cae252d0-7c80-4523-834c-a0d3e053796f/-/preview/-/quality/smart/-/format/auto/" id="pose-match" style={{ width: "100%"}}/>
           <h1>{maxDistance.toFixed(2)}</h1>
         </div>
       </header>
