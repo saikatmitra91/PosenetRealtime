@@ -89,6 +89,7 @@ function App() {
         value[currentImage] = maxDistance > 0.99;
         return value;
       });
+      setDistance(0);
       setMaxDistance(0);
       cancelAnimationFrame(requestId);
       startBreakCounter(5);
