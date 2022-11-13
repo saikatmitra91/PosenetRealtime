@@ -108,9 +108,9 @@ function App() {
   useEffect(() => {
     if (success.every((value) => value)) {
       jsConfetti.addConfetti({ emojis: ["✨"] });
-      setSuccess((value) => value.map((val) => false));
     }
   }, [success]);
+
 
   return (
     <div className="container">
