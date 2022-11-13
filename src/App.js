@@ -3,20 +3,23 @@ import "./App.css";
 import * as posenet from "@tensorflow-models/posenet";
 import Webcam from "react-webcam";
 import { drawKeypoints, drawSkeleton } from "./utilities";
-import { poseSimilarity } from 'posenet-similarity';
+import { poseSimilarity } from "posenet-similarity";
+import { useCounter } from "./useCounter";
 
 function App() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
-  const posenetRef = useRef(false)
+  const posenetRef = useRef(false);
   const [distance, setDistance] = useState(0);
-  const [maxDistance, setMaxDistance] = useState(distance)
+  const [maxDistance, setMaxDistance] = useState(distance);
+  const { count: startCounter, start } = useCounter();
+  const { count: breakCounter, start: startBreakCounter } = useCounter();
 
   /**
-   * @param {posenet.PoseNet} net 
+   * @param {posenet.PoseNet} net
    */
-   const detect = useCallback(async (net) => {
+  const detect = useCallback(async (net) => {
     if (
       typeof webcamRef.current !== "undefined" &&
       webcamRef.current !== null &&
@@ -35,24 +38,24 @@ function App() {
       const expectedPose = await net.estimateSinglePose(imgRef.current);
       const pose = await net.estimateSinglePose(video);
       const data = poseSimilarity(expectedPose, pose, {
-        strategy: 'cosineSimilarity'
-      })
-      setDistance(data)
+        strategy: "cosineSimilarity",
+      });
+      setDistance(data);
       drawCanvas(pose, video, videoWidth, videoHeight, canvasRef);
       window.requestAnimationFrame(() => detect(net));
     }
   }, []);
   //  Load posenet
   const runPosenet = useCallback(async () => {
-    posenetRef.current = true
+    posenetRef.current = true;
     const net = await posenet.load({
       inputResolution: { width: 640, height: 480 },
       scale: 0.8,
     });
-    
+
     //
     // setInterval(() => {
-      window.requestAnimationFrame(() => detect(net));
+    window.requestAnimationFrame(() => detect(net));
     // }, 1000);
   }, [detect]);
 
@@ -65,50 +68,44 @@ function App() {
   };
 
   useEffect(() => {
-    if (!posenetRef.current){
+    if (!posenetRef.current) {
       runPosenet();
     }
   }, [runPosenet]);
 
-  useEffect( () => {
-    if(distance > maxDistance) {
-      setMaxDistance(distance)
+  useEffect(() => {
+    if (distance > maxDistance) {
+      setMaxDistance(distance);
     }
-  }, [distance, maxDistance])
+  }, [distance, maxDistance]);
 
   return (
     <div className="App">
-      <header className="App-header">
-          <Webcam
-            ref={webcamRef}
-            style={{
-              position: "absolute",
-              marginLeft: "auto",
-              marginRight: "auto",
-              left: 0,
-              right: 0,
-              textAlign: "center",
-              zindex: 9,
-              width: 640,
-              height: 480,
-            }}
-          />
-          <canvas
-            ref={canvasRef}
-            style={{
-              position: "absolute",
-              marginLeft: "auto",
-              marginRight: "auto",
-              left: 0,
-              right: 0,
-              textAlign: "center",
-              zindex: 9,
-              width: 640,
-              height: 480,
-            }}
-          />
+      <div className="centered counter-container">
+        {startCounter !== -1 ? (
+          <div className="counter">{startCounter}</div>
+        ) : (
+          <button onClick={() => start(10)}>Start Posing</button>
+        )}
+      </div>
+      <header
+        className="App-header"
+        style={{
+          visibility:
+            startCounter === 0 || breakCounter === 0 ? "visible" : "hidden",
+        }}
+      >
+        <Webcam ref={webcamRef} className="centered" />
+        <canvas ref={canvasRef} className="centered" />
         <div className="image-score">
-          <img ref={imgRef} alt="pose" crossOrigin="anonymous" src="https://ucarecdn.com/cae252d0-7c80-4523-834c-a0d3e053796f/-/preview/-/quality/smart/-/format/auto/" id="pose-match" style={{ width: "100%"}}/>
+          <img
+            ref={imgRef}
+            alt="pose"
+            crossOrigin="anonymous"
+            src="https://ucarecdn.com/fd629ccd-c734-4b1d-9659-4381458e0857/-/preview/-/quality/smart/-/format/auto/"
+            id="pose-match"
+            style={{ width: "100%" }}
+          />
           <h1>{maxDistance.toFixed(2)}</h1>
         </div>
       </header>
