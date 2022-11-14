@@ -10,6 +10,7 @@ import { images } from "./constants";
 
 const jsConfetti = new JSConfetti();
 let requestId;
+let expectedPose;
 
 function App() {
   const webcamRef = useRef(null);
@@ -21,7 +22,7 @@ function App() {
   const { counter, startCounter } = useCounter();
   const [currentImage, setCurrentImage] = useState(-1);
   const [success, setSuccess] = useState(Array(images.length).fill(null));
-  const [isPosenetInit, setPoseNetInitState] = useState(false)
+  const [isPosenetInit, setPoseNetInitState] = useState(false);
 
   /**
    * @param {posenet.PoseNet} net
@@ -44,13 +45,15 @@ function App() {
 
       // Make Detections
       const pose = await net.estimateSinglePose(video, {
-        flipHorizontal: true
+        flipHorizontal: true,
       });
-      const expectedPose = await net.estimateSinglePose(imgRef.current);
-      const data = poseSimilarity(expectedPose, pose, {
-        strategy: "cosineSimilarity",
-      });
-      setDistance(data);
+      console.log(expectedPose);
+      if (expectedPose) {
+        const data = poseSimilarity(expectedPose, pose, {
+          strategy: "cosineSimilarity",
+        });
+        setDistance(data);
+      }
       drawCanvas(pose, video, videoWidth, videoHeight, canvasRef);
       requestId = window.requestAnimationFrame(() => detect());
     }
@@ -61,19 +64,16 @@ function App() {
       inputResolution: { width: 640, height: 480 },
       scale: 0.8,
     });
-    setPoseNetInitState(true)
-
+    setPoseNetInitState(true);
     // window.requestAnimationFrame(detect);
   }, []);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     if (currentImage === images.length - 1) {
       setCurrentImage(0);
     } else {
       setCurrentImage(currentImage + 1);
     }
-    startCounter(10);
-    detect();
   }, [currentImage, detect]); //eslint-disable-line
 
   const drawCanvas = (pose, video, videoWidth, videoHeight, canvas) => {
@@ -89,6 +89,22 @@ function App() {
       runPosenet();
     }
   }, [runPosenet]);
+
+  useEffect(() => {
+    if (currentImage !== -1 && imgRef.current.src === images[currentImage]) {
+      imgRef.current.onload = async () => {
+        setDistance(0);
+        setMaxDistance(0);
+        cancelAnimationFrame(requestId);
+        expectedPose = null;
+        startCounter(10);
+        detect();
+        expectedPose = await posenetRef.current.estimateSinglePose(
+          imgRef.current
+        );
+      };
+    }
+  }, [currentImage, detect, startCounter]);
 
   useEffect(() => {
     if (distance > maxDistance) {
