@@ -33,6 +33,11 @@
   width: 200px;
   top: 0;
   right: 0;
+  color: white;
+}
+
+.container {
+  background-color: black;
 }
 
 @keyframes App-logo-spin {

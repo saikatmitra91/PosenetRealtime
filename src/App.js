@@ -42,7 +42,9 @@ function App() {
       const net = posenetRef.current;
 
       // Make Detections
-      const pose = await net.estimateSinglePose(video);
+      const pose = await net.estimateSinglePose(video, {
+        flipHorizontal: true
+      });
       const expectedPose = await net.estimateSinglePose(imgRef.current);
       const data = poseSimilarity(expectedPose, pose, {
         strategy: "cosineSimilarity",
@@ -117,7 +119,7 @@ function App() {
   return (
     <div className="container">
       <div className="centered">
-        <Webcam ref={webcamRef} />
+        <Webcam ref={webcamRef} mirrored />
         <canvas className="canvas" ref={canvasRef} />
       </div>
       <button onClick={start} disabled={counter > -1}>
