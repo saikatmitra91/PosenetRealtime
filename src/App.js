@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
-import * as posenet from "@tensorflow-models/posenet";
+import { load } from "@tensorflow-models/posenet";
 import Webcam from "react-webcam";
 import JSConfetti from "js-confetti";
 import { drawKeypoints, drawSkeleton } from "./utilities";
@@ -59,7 +59,7 @@ function App() {
   }, []);
   //  Load posenet
   const runPosenet = useCallback(async () => {
-    posenetRef.current = await posenet.load({
+    posenetRef.current = await load({
       inputResolution: { width: 640, height: 480 },
       scale: 0.8,
     });
@@ -137,7 +137,7 @@ function App() {
   return (
     <div className="container">
       <div className="centered">
-        <Webcam ref={webcamRef} mirrored />
+        <Webcam ref={webcamRef} mirrored videoConstraints={{ frameRate: { max: 15 }}}/>
         <canvas className="canvas" ref={canvasRef} />
       </div>
       <button onClick={start} disabled={counter > -1 || !isPosenetInit}>
