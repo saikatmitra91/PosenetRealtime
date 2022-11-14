@@ -21,6 +21,7 @@ function App() {
   const { counter, startCounter } = useCounter();
   const [currentImage, setCurrentImage] = useState(-1);
   const [success, setSuccess] = useState(Array(images.length).fill(null));
+  const [isPosenetInit, setPoseNetInitState] = useState(false)
 
   /**
    * @param {posenet.PoseNet} net
@@ -60,8 +61,10 @@ function App() {
       inputResolution: { width: 640, height: 480 },
       scale: 0.8,
     });
-    window.requestAnimationFrame(detect);
-  }, [detect]);
+    setPoseNetInitState(true)
+
+    // window.requestAnimationFrame(detect);
+  }, []);
 
   const start = useCallback(() => {
     if (currentImage === images.length - 1) {
@@ -122,7 +125,7 @@ function App() {
         <Webcam ref={webcamRef} mirrored />
         <canvas className="canvas" ref={canvasRef} />
       </div>
-      <button onClick={start} disabled={counter > -1}>
+      <button onClick={start} disabled={counter > -1 || !isPosenetInit}>
         {counter > 0 ? counter : "Start"}
       </button>
       <div
