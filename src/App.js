@@ -47,7 +47,6 @@ function App() {
       const pose = await net.estimateSinglePose(video, {
         flipHorizontal: true,
       });
-      console.log(expectedPose);
       if (expectedPose) {
         const data = poseSimilarity(expectedPose, pose, {
           strategy: "cosineSimilarity",
